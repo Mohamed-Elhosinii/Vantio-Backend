@@ -1,94 +1,88 @@
-# Vantio — Backend API (.NET Core)
+# ✈️ Vantio — AI Travel Planner (Backend API)
 
-**Vantio** is an enterprise-grade, AI-powered travel-planning platform. This repository contains the backend RESTful API built with **ASP.NET Core**, serving as the core engine for user authentication, AI orchestration, third-party integrations, and database management.
+**Vantio** plans a full trip for you: tell it where you want to go, your dates and your budget, and it builds a **day-by-day itinerary** with flights, hotels, places to visit and the weather — all inside your budget.
 
-For the Angular frontend repository, please refer to the client-side repository.
+This repository is the **ASP.NET Core Web API** behind it. Graduation project of the **ITI Full-Stack .NET & Generative AI** track (2026), built by a 5-person team.
 
----
-
-## 🌟 Overview & Architecture
-
-The backend is engineered with a strict adherence to **Clean Code** principles and the **3-Tier Architecture**, ensuring high cohesion and low coupling across the application:
-
-1.  **Presentation Layer (PL):** ASP.NET Core Web API controllers handling HTTP requests, responses, and routing.
-2.  **Business Logic Layer (BLL):** Contains core business rules, AI orchestration logic via Semantic Kernel, and third-party API consumption services.
-3.  **Data Access Layer (DAL):** Manages database interactions using Entity Framework Core.
-
-### 🏗️ Design Patterns Implemented
-*   **Repository Design Pattern:** Abstracts data access logic, making the code more testable and maintainable.
-*   **Unit of Work:** Manages database transactions efficiently to ensure data integrity across multiple repository operations.
-*   **Caching Strategy:** Utilized custom dictionary caching to optimize database context lifecycles and significantly reduce redundant query execution times.
+🌐 **Live demo:** [frontend-smart-travel-planers.vercel.app](https://frontend-smart-travel-planers.vercel.app/)
+🖥️ **Frontend (Angular):** [Vantio-Frontend](https://github.com/Mohamed-Elhosinii/Vantio-Frontend)
 
 ---
 
-## 🛠️ Tech Stack
+## ✨ Features
+- 🤖 **AI trip planner** — Microsoft **Semantic Kernel** + **GPT-4o-mini** build a personalized plan, calling our own services (flights, hotels, weather, places) as **plugins**
+- 💰 **Budget-aware planning** — the budget is split between flights, hotel and activities and validated before the plan is returned
+- 🔐 **Authentication** — ASP.NET Core Identity, **JWT** access + refresh tokens, **Google login**, email OTP verification, password reset
+- 💳 **Subscriptions & payments** — **Paymob** gateway with webhook handling, plan usage limits
+- 📊 **Admin dashboard API** — users, plans, payments and statistics
+- 🛡️ **Production basics** — global exception middleware, FluentValidation, rate limiting on auth endpoints, background jobs (expired subscriptions, old tokens)
+- ✅ **200+ xUnit tests**
 
-| Concern | Technology |
-| --- | --- |
-| Framework | **.NET 10 / ASP.NET Core Web API** |
-| Database | **MS SQL Server** |
-| ORM | **Entity Framework (EF) Core** |
-| AI Orchestration | **Microsoft Semantic Kernel** & OpenAI API (GPT-4o-mini) |
-| Authentication | **ASP.NET Core Identity**, **JWT** (Access & Refresh Tokens), Google OAuth 2.0 |
-| Payment Gateway | **Paymob** (with secure Webhook handlers) |
-| Architecture | 3-Tier Architecture, SOLID Principles, LINQ |
+## 🔌 External APIs
+| Data | Provider |
+|---|---|
+| Flights | AirLabs / Aero |
+| Hotels | StayAPI |
+| Places & attractions | Foursquare |
+| Weather | Visual Crossing |
+| AI model | GitHub Models (GPT-4o-mini) |
+| Payments | Paymob |
 
----
+## 🏗️ Architecture
+3-Tier architecture with **Repository** and **Unit of Work** patterns:
 
-## 🔌 Third-Party API Integrations
+```
+SmartTravelPlaners.PL    → Controllers, middleware, Program.cs (API layer)
+SmartTravelPlaners.BLL   → Business logic, feature services, AI orchestrator, DTOs, validation
+SmartTravelPlaners.DAL   → EF Core DbContext, entities, Fluent API configurations, repositories, migrations
+SmartTravelPlaners.Tests → xUnit tests
+```
 
-The Vantio backend acts as an orchestrator, aggregating data from multiple external services to generate personalized itineraries:
-*   **Flight Data:** AirLabs / Aero APIs
-*   **Hotel Listings:** StayAPI
-*   **Local Attractions & POIs:** Foursquare API
-*   **Weather Forecasts:** Visual Crossing Weather API
-*   **Payment Processing:** Paymob Gateway
+```mermaid
+flowchart LR
+    A[Angular SPA] -->|REST + JWT| B[Controllers - PL]
+    B --> C[Services & AI Orchestrator - BLL]
+    C -->|Semantic Kernel plugins| D[(External APIs)]
+    C --> E[Unit of Work / Repositories - DAL]
+    E --> F[(SQL Server)]
+```
 
----
+## 🛠️ Tech stack
+**.NET 10** · ASP.NET Core Web API · Entity Framework Core · SQL Server · ASP.NET Core Identity · JWT · Semantic Kernel · FluentValidation · xUnit · Swagger
 
-## 🚀 Getting Started
+## ▶️ Run it locally
+**Requirements:** .NET 10 SDK, SQL Server (LocalDB or Developer), Visual Studio 2022+ or Rider
 
-### Prerequisites
-*   [.NET SDK](https://dotnet.microsoft.com/download) (Version corresponding to the project)
-*   [SQL Server](https://www.microsoft.com/en-us/sql-server/sql-server-downloads) (LocalDB or Developer Edition)
-*   IDE: Visual Studio 2022 or JetBrains Rider
-
-### Setup Instructions
-
-**1. Clone the repository**
-git clone [https://github.com/YourUsername/Backend-Smart-Travel-Planers.git](https://github.com/YourUsername/Backend-Smart-Travel-Planers.git) 
-cd Backend-Smart-Travel-Planers
-
-2. Configure Environment Variables
-Open appsettings.json (or create an appsettings.Development.json file) and configure your database connection string and required API keys. 
-Never commit your actual API keys to version control.
-
-JSON
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=YOUR_SERVER;Database=VantioDB;Trusted_Connection=True;MultipleActiveResultSets=true"
-  },
-  "Jwt": {
-    "Key": "Your_Super_Secret_Key_Here",
-    "Issuer": "VantioAPI",
-    "Audience": "VantioUsers"
-  },
-  "ApiKeys": {
-    "OpenAI": "Your_OpenAI_Key",
-    "Paymob": "Your_Paymob_Keys",
-    "Foursquare": "Your_Foursquare_Key"
-  }
-}
-
-3. Apply Database Migrations
-The project uses EF Core Code-First approach. Run the following command to create the database schema and apply seed data:
-Bash
-dotnet ef database update
-
-5. Run the API
-Bash
-dotnet run
-The API will be available at https://localhost:5001 (or the port specified in your launchSettings.json). You can explore the endpoints using the built-in Swagger UI.
 ```bash
-git clone [https://github.com/YourUsername/Backend-Smart-Travel-Planers.git](https://github.com/YourUsername/Backend-Smart-Travel-Planers.git)
-cd Backend-Smart-Travel-Planers
+git clone https://github.com/Mohamed-Elhosinii/Vantio-Backend.git
+cd Vantio-Backend/SmartTravelPlaners.PL
+```
+
+Add your settings with **User Secrets** (keeps keys out of the code):
+```bash
+dotnet user-secrets init
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=.;Database=VantioDB;Trusted_Connection=True;TrustServerCertificate=True"
+dotnet user-secrets set "JwtSettings:Key" "<a long random secret>"
+# Also needed: Authentication:Google, EmailSettings, Paymob, GitHubModels,
+# HotelApiSettings, WeatherApiSettings, FoursquareSettings, SerperSettings
+```
+
+Create the database and run:
+```bash
+dotnet ef database update --project ../SmartTravelPlaners.DAL
+dotnet run
+```
+Then open **Swagger** at `https://localhost:<port>/swagger`.
+
+## 👥 Team
+| Member | GitHub |
+|---|---|
+| Mohamed Mostafa Elhoseny | [@Mohamed-Elhosinii](https://github.com/Mohamed-Elhosinii) |
+| Hesham Diab | [@Heshamdiab2003](https://github.com/Heshamdiab2003) |
+| Nourin Reda | — |
+| Mariam Mostafa | — |
+| Basma HossamElDin | — |
+
+**My part:** set up the 3-tier solution, the Generic Repository & Unit of Work, EF Core Fluent API configurations, the Hotel and Weather API integrations (as Semantic Kernel plugins), work on the Trip Orchestrator (budget split, round-trip flights), and moving API keys out of the code into configuration.
+
+Mentors: Mazen Barakat, Alyaa Khaled — ITI.
